@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elegance Perfumes – Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  --gold: #c9a96e;
+  --gold-light: #e8d5b0;
+  --gold-dark: #9a7840;
+  --black: #0a0a0a;
+  --black-soft: #111111;
+  --black-card: #161616;
+  --white: #f8f5f0;
+  --white-dim: rgba(248,245,240,0.55);
+  --error: #d4665a;
+  --success: #6aab7e;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  background: var(--black);
+  font-family: 'Jost', sans-serif;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Atmospheric background ── */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 80% 20%, rgba(201,169,110,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 10% 90%, rgba(201,169,110,0.07) 0%, transparent 55%),
+    #0a0a0a;
+}
+
+.grain {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.045'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+/* ── Floating scent orbs ── */
+.orb {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  animation: drift linear infinite;
+  background: radial-gradient(circle, rgba(201,169,110,0.15), transparent 70%);
+}
+.orb:nth-child(1) { width: 300px; height: 300px; top: -60px; left: 60%; animation-duration: 18s; }
+.orb:nth-child(2) { width: 180px; height: 180px; bottom: 10%; right: 5%; animation-duration: 13s; animation-delay: -5s; }
+.orb:nth-child(3) { width: 220px; height: 220px; top: 50%; left: -5%; animation-duration: 22s; animation-delay: -9s; }
+
+@keyframes drift {
+  0%   { transform: translateY(0px) scale(1); opacity: 0.6; }
+  50%  { transform: translateY(-30px) scale(1.08); opacity: 1; }
+  100% { transform: translateY(0px) scale(1); opacity: 0.6; }
+}
+
+/* ── Card ── */
+.card-wrap {
+  position: relative; z-index: 10;
+  width: 100%; max-width: 460px;
+  padding: 20px;
+  animation: fadeUp 0.8s cubic-bezier(.22,.68,0,1.2) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  background: var(--black-card);
+  border: 1px solid rgba(201,169,110,0.18);
+  border-radius: 4px;
+  padding: 48px 44px 40px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,169,110,0.06) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* ── Logo area ── */
+.logo-area {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.logo-icon {
+  width: 52px; height: 52px;
+  margin: 0 auto 14px;
+  border: 1px solid rgba(201,169,110,0.4);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, rgba(201,169,110,0.15), transparent);
+}
+
+.logo-icon svg { width: 26px; height: 26px; }
+
+.brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  color: var(--white);
+}
+
+.brand-tagline {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(201,169,110,0.15);
+  margin-bottom: 30px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 0 12px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: rgba(248,245,240,0.35);
+  cursor: pointer;
+  border: none; background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.3s ease;
+}
+
+.tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.tab:hover:not(.active) { color: var(--white-dim); }
+
+/* ── Forms ── */
+.form-panel { display: none; }
+.form-panel.active { display: block; animation: slideIn 0.35s ease both; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.field {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(201,169,110,0.75);
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.field input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 2px;
+  padding: 13px 16px;
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.25s, background 0.25s;
+  letter-spacing: 0.04em;
+}
+
+.field input::placeholder { color: rgba(248,245,240,0.25); }
+
+.field input:focus {
+  border-color: rgba(201,169,110,0.65);
+  background: rgba(255,255,255,0.06);
+}
+
+.field input.error { border-color: var(--error); }
+
+/* ── CAPTCHA ── */
+.captcha-block {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(201,169,110,0.18);
+  border-radius: 3px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.captcha-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(201,169,110,0.75);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.captcha-label svg { width: 13px; height: 13px; opacity: 0.7; }
+
+.captcha-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.captcha-canvas-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+canvas.captcha-canvas {
+  display: block;
+  border-radius: 3px;
+  border: 1px solid rgba(201,169,110,0.15);
+}
+
+.captcha-refresh {
+  background: none; border: none;
+  color: var(--gold); cursor: pointer;
+  font-size: 14px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.4s ease, background 0.2s;
+  flex-shrink: 0;
+}
+.captcha-refresh:hover { background: rgba(201,169,110,0.1); transform: rotate(180deg); }
+
+.captcha-input-field {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 2px;
+  padding: 10px 13px;
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.25s;
+}
+.captcha-input-field::placeholder { color: rgba(248,245,240,0.25); }
+.captcha-input-field:focus { border-color: rgba(201,169,110,0.55); }
+.captcha-input-field.error { border-color: var(--error); }
+
+/* ── Submit button ── */
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  color: var(--black);
+  border: none;
+  border-radius: 2px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.submit-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.submit-btn:hover::after { transform: translateX(100%); }
+.submit-btn:hover { opacity: 0.92; }
+.submit-btn:active { transform: scale(0.99); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Message area ── */
+.msg {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 300;
+  margin-top: 14px;
+  min-height: 18px;
+  letter-spacing: 0.05em;
+  transition: all 0.3s;
+}
+.msg.error { color: var(--error); }
+.msg.success { color: var(--success); }
+
+/* ── Divider ── */
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 22px 0 18px;
+}
+.divider span { font-size: 10px; color: rgba(248,245,240,0.2); letter-spacing: 0.15em; text-transform: uppercase; }
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: rgba(201,169,110,0.12);
+}
+
+/* ── Google button ── */
+.google-btn {
+  width: 100%;
+  padding: 13px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,169,110,0.18);
+  border-radius: 2px;
+  color: var(--white-dim);
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.google-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(201,169,110,0.3); }
+.google-btn svg { width: 17px; height: 17px; }
+
+/* ── Loading spinner ── */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: rgba(0,0,0,0.9);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Back link ── */
+.back-link {
+  text-align: center;
+  margin-top: 28px;
+}
+.back-link a {
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(201,169,110,0.55);
+  text-decoration: none; transition: color 0.2s;
+}
+.back-link a:hover { color: var(--gold); }
+
+/* ── Decorative corner ── */
+.corner { position: absolute; width: 22px; height: 22px; }
+.corner.tl { top: 14px; left: 14px; border-top: 1px solid rgba(201,169,110,0.35); border-left: 1px solid rgba(201,169,110,0.35); }
+.corner.br { bottom: 14px; right: 14px; border-bottom: 1px solid rgba(201,169,110,0.35); border-right: 1px solid rgba(201,169,110,0.35); }
+
+/* ── Password strength ── */
+.strength-bar { display: flex; gap: 3px; margin-top: 8px; }
+.strength-seg { height: 2px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.3s; }
+</style>
+</head>
+
+<body>
+<div class="bg-layer"></div>
+<div class="grain"></div>
+<div class="orb"></div>
+<div class="orb"></div>
+<div class="orb"></div>
+
+<div class="card-wrap">
+  <div class="card">
+    <div class="corner tl"></div>
+    <div class="corner br"></div>
+
+    <!-- Logo -->
+    <div class="logo-area">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c9a96e" stroke-width="1.2">
+          <path d="M12 2C12 2 8 6 8 10a4 4 0 0 0 8 0c0-4-4-8-4-8z"/>
+          <path d="M8 10c-2 1-4 3-4 6 0 3.3 3.6 6 8 6s8-2.7 8-6c0-3-2-5-4-6"/>
+          <line x1="12" y1="14" x2="12" y2="20"/>
+        </svg>
+      </div>
+      <div class="brand-name">Elegance</div>
+      <div class="brand-tagline">Luxury Fragrances</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div class="form-panel active" id="loginPanel">
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+
+      <!-- CAPTCHA -->
+      <div class="captcha-block">
+        <div class="captcha-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Verification
+        </div>
+        <div class="captcha-inner">
+          <div class="captcha-canvas-wrap">
+            <canvas class="captcha-canvas" id="loginCaptchaCanvas" width="140" height="48"></canvas>
+          </div>
+          <button class="captcha-refresh" onclick="genCaptcha('login')" title="Refresh">↺</button>
+          <input class="captcha-input-field" id="loginCaptchaInput" placeholder="Enter code" maxlength="6" autocomplete="off">
+        </div>
+      </div>
+
+      <button class="submit-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
+
+      <div class="divider"><span>or</span></div>
+
+      <button class="google-btn" onclick="handleGoogle()">
+        <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="msg" id="loginMsg"></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div class="form-panel" id="registerPanel">
+
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="Your full name">
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="regEmail" placeholder="your@email.com">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min 8 characters" oninput="checkStrength(this.value)">
+        <div class="strength-bar" id="strengthBar">
+          <div class="strength-seg" id="s1"></div>
+          <div class="strength-seg" id="s2"></div>
+          <div class="strength-seg" id="s3"></div>
+          <div class="strength-seg" id="s4"></div>
+        </div>
+      </div>
+
+      <!-- CAPTCHA -->
+      <div class="captcha-block">
+        <div class="captcha-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Verification
+        </div>
+        <div class="captcha-inner">
+          <div class="captcha-canvas-wrap">
+            <canvas class="captcha-canvas" id="registerCaptchaCanvas" width="140" height="48"></canvas>
+          </div>
+          <button class="captcha-refresh" onclick="genCaptcha('register')" title="Refresh">↺</button>
+          <input class="captcha-input-field" id="registerCaptchaInput" placeholder="Enter code" maxlength="6" autocomplete="off">
+        </div>
+      </div>
+
+      <button class="submit-btn" id="registerBtn" onclick="handleRegister()">Create Account</button>
+
+      <div class="divider"><span>or</span></div>
+
+      <button class="google-btn" onclick="handleGoogle()">
+        <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23 z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="msg" id="registerMsg"></div>
+    </div>
+
+    <div class="back-link">
+      <a href="index.html">← Back to Shop</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── SUPABASE CONFIG ─────────────────────────────────────────── */
+// 🔑 Replace these with your actual Supabase project values
+const SUPABASE_URL = "https://vrjbdxpvchjagcycaofj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyamJkeHB2Y2hqYWdjeWNhb2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0OTAzODQsImV4cCI6MjA5MjA2NjM4NH0.xCzOifby-SCjF2X5NChXq3HlEbHQF_nJdhQQe5Ifo_8";
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ── CAPTCHA ENGINE ──────────────────────────────────────────── */
+const captchaStore = { login: '', register: '' };
+
+const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function genCaptcha(form) {
+  let code = '';
+  for (let i = 0; i < 4; i++) code += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
+  captchaStore[form] = code;
+  drawCaptcha(form, code);
+  const inp = document.getElementById(form + 'CaptchaInput');
+  inp.value = '';
+  inp.classList.remove('error');
+}
+
+function drawCaptcha(form, code) {
+  const canvas = document.getElementById(form + 'CaptchaCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Background
+  ctx.clearRect(0, 0, W, H);
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#1a1510');
+  bg.addColorStop(1, '#120f0a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Noise dots
+  for (let i = 0; i < 55; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(201,169,110,${Math.random() * 0.3})`;
+    ctx.fill();
+  }
+
+  // Distraction lines
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(Math.random() * W, Math.random() * H);
+    ctx.lineTo(Math.random() * W, Math.random() * H);
+    ctx.strokeStyle = `rgba(201,169,110,${0.08 + Math.random() * 0.12})`;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  // Wavy grid lines
+  for (let y = 10; y < H; y += 14) {
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 3) {
+      const wy = y + Math.sin((x / W) * Math.PI * 3 + Math.random()) * 1.5;
+      x === 0 ? ctx.moveTo(x, wy) : ctx.lineTo(x, wy);
+    }
+    ctx.strokeStyle = 'rgba(201,169,110,0.06)';
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+  }
+
+  // Draw each character with individual distortion
+  const fonts = ['Courier New', 'Georgia', 'Trebuchet MS', 'Impact'];
+  const charW = (W - 24) / 4;
+  code.split('').forEach((ch, i) => {
+    ctx.save();
+    const cx = 12 + i * charW + charW / 2;
+    const cy = H / 2 + 2;
+    ctx.translate(cx, cy);
+    ctx.rotate((Math.random() - 0.5) * 0.45);
+    ctx.font = `bold ${22 + Math.floor(Math.random() * 5)}px "${fonts[i % fonts.length]}"`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 3;
+
+    // Gradient per char
+    const grad = ctx.createLinearGradient(-8, -12, 8, 12);
+    grad.addColorStop(0, '#e8d5b0');
+    grad.addColorStop(0.5, '#c9a96e');
+    grad.addColorStop(1, '#9a7840');
+    ctx.fillStyle = grad;
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  });
+
+  // Overlay noise texture
+  for (let i = 0; i < 30; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 0.8, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.06})`;
+    ctx.fill();
+  }
+}
+
+// Init captchas on load
+genCaptcha('login');
+genCaptcha('register');
+
+/* ── TAB SWITCH ──────────────────────────────────────────────── */
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  document.getElementById('loginPanel').classList.toggle('active', tab === 'login');
+  document.getElementById('registerPanel').classList.toggle('active', tab === 'register');
+  clearMsgs();
+  genCaptcha(tab);
+}
+
+function clearMsgs() {
+  ['loginMsg', 'registerMsg'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = ''; el.className = 'msg';
+  });
+}
+
+/* ── HELPERS ─────────────────────────────────────────────────── */
+function setMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
+
+function setLoading(btnId, loading, label) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span> ${label}` : label;
+}
+
+function validateCaptcha(form) {
+  const input = document.getElementById(form + 'CaptchaInput').value.trim().toUpperCase();
+  if (input !== captchaStore[form]) {
+    document.getElementById(form + 'CaptchaInput').classList.add('error');
+    genCaptcha(form);
+    return false;
+  }
+  return true;
+}
+
+/* ── PASSWORD STRENGTH ───────────────────────────────────────── */
+function checkStrength(pw) {
+  const segs = [document.getElementById('s1'), document.getElementById('s2'),
+                document.getElementById('s3'), document.getElementById('s4')];
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ['#d4665a', '#e08040', '#d4b84a', '#6aab7e'];
+  segs.forEach((s, i) => {
+    s.style.background = i < score ? colors[score - 1] : 'rgba(255,255,255,0.08)';
+  });
+}
+
+/* ── LOGIN ───────────────────────────────────────────────────── */
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!email || !password) return setMsg('loginMsg', 'Please fill in all fields.', 'error');
+  if (!validateCaptcha('login')) return setMsg('loginMsg', 'Incorrect verification code. Try again.', 'error');
+
+  setLoading('loginBtn', true, 'Signing In...');
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    setMsg('loginMsg', '✓ Welcome back! Redirecting…', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1200);
+  } catch (err) {
+    setMsg('loginMsg', err.message || 'Login failed. Please try again.', 'error');
+    genCaptcha('login');
+  } finally {
+    setLoading('loginBtn', false, 'Sign In');
+  }
+}
+
+/* ── REGISTER ────────────────────────────────────────────────── */
+async function handleRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+
+  if (!name || !email || !password) return setMsg('registerMsg', 'Please fill in all fields.', 'error');
+  if (password.length < 8) return setMsg('registerMsg', 'Password must be at least 8 characters.', 'error');
+  if (!validateCaptcha('register')) return setMsg('registerMsg', 'Incorrect verification code. Try again.', 'error');
+
+  setLoading('registerBtn', true, 'Creating Account...');
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: { data: { full_name: name } }
+    });
+    if (error) throw error;
+    setMsg('registerMsg', '✓ Account created! Check your email to verify.', 'success');
+    genCaptcha('register');
+  } catch (err) {
+    setMsg('registerMsg', err.message || 'Registration failed. Please try again.', 'error');
+    genCaptcha('register');
+  } finally {
+    setLoading('registerBtn', false, 'Create Account');
+  }
+}
+
+/* ── GOOGLE OAUTH ────────────────────────────────────────────── */
+async function handleGoogle() {
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/index.html' }
+    });
+    if (error) throw error;
+  } catch (err) {
+    setMsg('loginMsg', err.message, 'error');
+    setMsg('registerMsg', err.message, 'error');
+  }
+}
+
+/* ── SESSION CHECK ───────────────────────────────────────────── */
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) window.location.href = 'index.html';
+})();
+</script>
+</body>
+</html>
